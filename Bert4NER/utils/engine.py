@@ -7,6 +7,8 @@ import os
 import time
 import timeit
 import torch
+import torch.nn as nn
+import torch.nn.functional as F
 import numpy as np
 
 from abc import ABC
@@ -46,7 +48,7 @@ class BertFitter(Fitter):
         self.device = device
         self.trial = trial #for optuna
 
-    def fit(self, epochs, return_metric=False, monitor='epoch train_loss valid_loss metric1, metric2 time', model_path=os.path.join('..', 'weights', 'model.pth'), show_graph=True):
+    def fit(self, epochs, return_metric=False, monitor='epoch train_loss valid_loss metric1 metric2 time', model_path=os.path.join('..', 'weights', 'model.pth'), show_graph=True):
         self.model_path = model_path
         self.log(f'{time.ctime()}')
         self.log(f'Using device: {self.device}')
@@ -70,7 +72,7 @@ class BertFitter(Fitter):
                 train_loss += self.train(batch, model, optimizer, self.device, self.scheduler)
                 if ind % 500 == 0:
                     self.log(f'Batch: {ind}, Train loss: {train_loss/ len(self.train_dl)}')
-                break
+#                 break
                 mb.child.comment = f'{train_loss / (ind+1 * self.train_dl.batch_size):.3f}'
             train_loss /= mb.child.total
             train_loss_list.append(train_loss) #for graph
@@ -86,7 +88,7 @@ class BertFitter(Fitter):
                     valid_metric_1 += valid_metric_[1]
                     if ind % 500 == 0:
                         self.log(f'Batch: {ind}, Valid loss: {valid_loss/ len(self.valid_dl)}')
-                    break
+#                     break
                     mb.child.comment = f'{valid_loss / (ind+1 * self.train_dl.batch_size):.3f}'
 
                 valid_loss /= mb.child.total
@@ -119,7 +121,7 @@ class BertFitter(Fitter):
             ret_time = f'{int(hours)}:{int(mins)}:{int(secs)}'
             mb.write([epoch,f'{train_loss:.6f}',f'{valid_loss:.6f}',f'{valid_metric_0:.6f}', f'{valid_metric_1:.6f}', f'{ret_time}'],table=True)
             self.log(f'Evaluation time: {ret_time}\n')
-            break
+#             break
 
         if return_metric: return best_metric
 
@@ -131,8 +133,8 @@ class BertFitter(Fitter):
         inputs, target_tag, target_pos = [x_.to(device) for x_ in x.values()], y_tag.to(device), y_pos.to(device)
         opt.zero_grad()
         out = model(*inputs)
-        loss_tag = self.loss_func(out[0], target_tag, x['mask'], model.num_tag)
-        loss_pos = self.loss_func(out[1], target_pos, x['mask'], model.num_pos)
+        loss_tag = self.loss_func(out[0], target_tag, x['attention_mask'], model.num_tag)
+        loss_pos = self.loss_func(out[1], target_pos, x['attention_mask'], model.num_pos)
         loss = (loss_tag + loss_pos) / 2
         loss.backward()
         opt.step()
@@ -147,22 +149,22 @@ class BertFitter(Fitter):
         x = xy
         inputs, target_tag, target_pos = [x_.to(device) for x_ in x.values()], y_tag.to(device), y_pos.to(device)
         out = model(*inputs)
-        loss_tag = self.loss_func(out[0], target_tag, x['mask'], model.num_tag)
-        loss_pos = self.loss_func(out[1], target_pos, x['mask'], model.num_pos)
+        loss_tag = self.loss_func(out[0], target_tag, x['attention_mask'], model.num_tag)
+        loss_pos = self.loss_func(out[1], target_pos, x['attention_mask'], model.num_pos)
         loss = (loss_tag + loss_pos) / 2
 
 #         skelarn metrics to be calculated for every item in batch
         cleaned_out_0 = out[0].cpu().softmax(2).argmax(dim=2) #[bs, seq_len, hidden_dim(num_labels)] -> [bs, seq_len]
         cleaned_out_1 = out[1].cpu().softmax(2).argmax(dim=2) #[bs, seq_len, hidden_dim(num_labels)] -> [bs, seq_len]
-        all_metric_0, all_metric_2 = [], []
-        for i in range(target_tag.shape[0])
+        all_metric_0, all_metric_1 = [], []
+        for i in range(target_tag.shape[0]):
             metric_0 = self.metrics[0](target_tag.cpu()[i], cleaned_out_0[i])  #sklearn metrics are (targ, inp)
             all_metric_0.append(metric_0)
             metric_1 = self.metrics[1](target_pos.cpu()[i], cleaned_out_1[i])  #sklearn metrics are (targ, inp)
             all_metric_1.append(metric_1)
 
-        metrics = list((all_metric_0 / target_tag.shape[0]),
-                   (all_metric_1 / target_tag.shape[1]))
+        metrics = ((sum(all_metric_0) / target_tag.shape[0]),
+                   (sum(all_metric_1) / target_tag.shape[1]))
         return loss.item(), metrics
 
     def log(self, message, verbose=False):
@@ -175,18 +177,18 @@ class BertFitter(Fitter):
         '''loss func for NER tasks
             out is logit from the model. Shape (bs, seq_len, hidden_dim[num_labels])
             target is target from dataloader. Shape (bs, seq_len)
-        ''''
+        '''
         #the mask tell us where non zero tokens are
         #the num_labels is used to tell us how many labels(le.classes_) are in the targ
         non_zero_tokens = mask.view(-1) == 1 # zeroed token_ids have a mask of 1
         ignore_index = func.ignore_index
 
     #     if the token is not zero, select the corresponding target else set ignore_index
-        cleaned_target = torch.where(non_zero_tokens, target.view(-1), ignore_index) #[bs*seq_len]
+        cleaned_target = torch.where(non_zero_tokens, target.view(-1), torch.tensor(ignore_index)) #[bs*seq_len]
 
         cleaned_out = out.view(-1, num_labels) #[bs*seq_len, num_labels]
 
-        loss = func(cleaned_out, cleaned_target, ignore_index=ignore_index)
+        loss = func(cleaned_out, cleaned_target)
 
         return loss
 

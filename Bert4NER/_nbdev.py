@@ -2,26 +2,45 @@
 
 __all__ = ["index", "modules", "custom_doc_links", "git_url"]
 
-index = {"create_path": "config.ipynb",
+index = {"create_path": "utils.utils.ipynb",
          "DATA_PATH": "config.ipynb",
          "MODEL_PATH": "config.ipynb",
+         "OUTPUT_PATH": "config.ipynb",
          "LR": "config.ipynb",
          "TRAIN_BATCH_SIZE": "config.ipynb",
          "VALID_BATCH_SIZE": "config.ipynb",
-         "NUM_EPOCHS": "config.ipynb",
+         "NUM_EPOCHS": "train.ipynb",
          "MAX_SEQ_LEN": "config.ipynb",
          "MODEL_NAME": "config.ipynb",
          "DEVICE": "config.ipynb",
          "TOKENIZER": "config.ipynb",
          "EntityDataset": "dataset.dataset.ipynb",
-         "HasocModel": "model.model.ipynb",
+         "EntityModel": "model.model.ipynb",
+         "train_dl": "train.ipynb",
+         "valid_dl": "train.ipynb",
+         "modeller": "train.ipynb",
+         "model_params": "train.ipynb",
+         "no_decay": "train.ipynb",
+         "optimizer_params": "train.ipynb",
+         "lr": "train.ipynb",
+         "optimizer": "train.ipynb",
+         "num_train_steps": "train.ipynb",
+         "scheduler": "train.ipynb",
+         "fit": "train.ipynb",
          "Fitter": "utils.engine.ipynb",
-         "BertFitter": "utils.engine.ipynb"}
+         "BertFitter": "utils.engine.ipynb",
+         "seed_everything": "utils.utils.ipynb",
+         "process_data": "utils.utils.ipynb",
+         "create_loader": "utils.utils.ipynb",
+         "save_label_encoders": "utils.utils.ipynb",
+         "load_label_encoders": "utils.utils.ipynb"}
 
 modules = ["config.py",
            "dataset/dataset.py",
            "model/model.py",
-           "utils/engine.py"]
+           "train.py",
+           "utils/engine.py",
+           "utils/utils.py"]
 
 doc_url = "https://Tendo.github.io/Bert4NER/"
 

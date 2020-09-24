@@ -13,6 +13,7 @@ tags
 #folder
 weights/
 data/
+outputs/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

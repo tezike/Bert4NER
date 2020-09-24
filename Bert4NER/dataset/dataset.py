@@ -15,12 +15,10 @@ from sklearn.preprocessing import LabelEncoder
 
 # Cell
 class EntityDataset(torch.utils.data.Dataset):
-    def __init__(self, texts, pos, tags, le_pos, le_tags):
+    def __init__(self, texts, pos, tags):
         self.texts = texts
         self.pos = pos
         self.tags = tags
-        self.le_tags = le_tags
-        self.le_pos = le_pos
 
     def __len__(self):
         return len(self.texts)
