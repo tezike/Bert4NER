@@ -163,6 +163,8 @@ class BertFitter(Fitter):
             metric_1 = self.metrics[1](target_pos.cpu()[i], cleaned_out_1[i])  #sklearn metrics are (targ, inp)
             all_metric_1.append(metric_1)
 
+        print(f"all_metric_0: {all_metric_0}")
+        print(f"all_metric_1: {all_metric_1}")
         metrics = ((sum(all_metric_0) / target_tag.shape[0]),
                    (sum(all_metric_1) / target_tag.shape[1]))
         return loss.item(), metrics
@@ -184,7 +186,9 @@ class BertFitter(Fitter):
         ignore_index = func.ignore_index
 
     #     if the token is not zero, select the corresponding target else set ignore_index
-        cleaned_target = torch.where(non_zero_tokens, target.view(-1), torch.tensor(ignore_index)) #[bs*seq_len]
+        cleaned_target = torch.where(non_zero_tokens.to(target.device),
+                                     target.view(-1),
+                                     torch.tensor(ignore_index).to(target.device)) #[bs*seq_len]
 
         cleaned_out = out.view(-1, num_labels) #[bs*seq_len, num_labels]
 
