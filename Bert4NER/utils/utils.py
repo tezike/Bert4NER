@@ -48,12 +48,12 @@ def create_loader(text, tags, pos, bs, drop_last=False, sampler=None, ret_datase
 
 # Cell
 def save_label_encoders(le_tag, le_pos):
-    if (config.OUTPUT_PATH/'le_tag_encoder.pkl').exists() and (config.OUTPUT_PATH/'le_pos_encoder.pkl').exists():
-        print('files files already exist')
+    if (config.OUTPUT_PATH/'le_tag_encoder.bin').exists() and (config.OUTPUT_PATH/'le_pos_encoder.bin').exists():
+        print('encoders already exist')
         return
     torch.save(le_tag, config.OUTPUT_PATH/'le_tag_encoder.bin')
     torch.save(le_pos, config.OUTPUT_PATH/'le_pos_encoder.bin')
-    print('files saved!')
+    print('encoders saved!')
 
 # Cell
 def load_label_encoders():
@@ -62,5 +62,5 @@ def load_label_encoders():
         le_pos = torch.load(config.OUTPUT_PATH/'le_pos_encoder.bin')
         return le_tag, le_pos
     else:
-        print(f"No files exist in {str(config.OUTPUT_PATH/'le_tag_encoder.bin')} directory")
+        print(f"No encoders exist in {str(config.OUTPUT_PATH/'le_tag_encoder.bin')} directory")
         return None

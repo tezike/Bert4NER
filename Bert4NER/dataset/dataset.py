@@ -37,7 +37,7 @@ class EntityDataset(torch.utils.data.Dataset):
             inputs = config.TOKENIZER.encode(
                 word,
                 add_special_tokens = False,
-                truncation = True
+#                 truncation = True
             )
 
             input_len = len(inputs)
